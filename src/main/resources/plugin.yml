@@ -1,0 +1,4 @@
+name: QuadPlots
+version: 1.0.0
+main: net.eltown.quadplots.QuadPlots
+api: 1.0.0

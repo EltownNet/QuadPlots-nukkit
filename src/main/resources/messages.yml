@@ -1,0 +1,5 @@
+prefix: "§8» §bPlots §8| §7"
+
+command.not.found: "§cDieser Unterbefehl konnte nicht gefunden werden. Führe /p help aus, um eine Liste aller verfügbaren Commands zu erhalten."
+not.in.a.plot: "§cDu befindest dich auf keinem Plot."
+info.command: "§6Plot [0];[1]\n§aBesitzer: §7[2]"
