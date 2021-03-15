@@ -17,14 +17,15 @@ public class QuadPlots extends PluginBase {
 
     @Override
     public void onLoad() {
+        this.saveDefaultConfig();
         api = new Api(this);
+        api.init();
         Language.init(this);
         Generator.addGenerator(PlotGenerator.class, "Plots", Generator.TYPE_INFINITE);
     }
 
     @Override
     public void onEnable() {
-        api.init();
         this.getServer().getCommandMap().register("plot", new RootCommand(this));
     }
 

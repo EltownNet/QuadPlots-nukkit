@@ -2,9 +2,7 @@ package net.eltown.quadplots.commands;
 
 import cn.nukkit.command.CommandSender;
 import net.eltown.quadplots.QuadPlots;
-import net.eltown.quadplots.commands.subcommands.GenerateCommand;
-import net.eltown.quadplots.commands.subcommands.InfoCommand;
-import net.eltown.quadplots.commands.subcommands.WarpCommand;
+import net.eltown.quadplots.commands.subcommands.*;
 import net.eltown.quadplots.components.language.Language;
 
 import java.util.ArrayList;
@@ -20,7 +18,9 @@ public class SubCommandHandler {
         commands.addAll(Arrays.asList(
                 new InfoCommand(plugin),
                 new WarpCommand(plugin),
-                new GenerateCommand(plugin)
+                new GenerateCommand(plugin),
+                new ClaimCommand(plugin),
+                new ClearCommand(plugin)
         ));
     }
 

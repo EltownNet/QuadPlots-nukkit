@@ -1,1 +1,4 @@
-uri:
+MongoDb:
+  Uri: "mongodb://root:e67b!LwYNdv45g6smn3H9p!32JzfsdgzYt6hNnYK323!wdL@185.223.28.34:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false"
+  Database: "eltown"
+  Collection: "de1_plots"

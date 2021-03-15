@@ -2,14 +2,23 @@ package net.eltown.quadplots.components.api;
 
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.Config;
+import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoCollection;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.commands.SubCommandHandler;
 import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.data.PlotGeneratorInfo;
+import org.bson.Document;
+
+import javax.print.Doc;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class Api {
 
@@ -26,16 +35,33 @@ public class Api {
     }
 
     public void init() {
-        this.provider = new Provider(this.plugin/*, new MongoClientURI(this.plugin.getConfig().getString("uri"))*/);
+        final Config c = this.plugin.getConfig();
+
+        this.provider = new Provider(this.plugin,
+                new MongoClientURI(c.getString("MongoDb.Uri")),
+                c.getString("MongoDb.Database"),
+                c.getString("MongoDb.Collection")
+        );
+
+        this.provider.connect();
     }
 
     public Vector3 getPosition(final int x, final int z, final int y) {
         return new Vector3(x * this.getProvider().getGeneratorInfo().getTotalSize(), y, z * this.getProvider().getGeneratorInfo().getTotalSize());
     }
 
+    public Vector3 getPosition(final int x, final int z) {
+        return new Vector3(x * this.getProvider().getGeneratorInfo().getTotalSize(), this.getProvider().getGeneratorInfo().getHeight(), z * this.getProvider().getGeneratorInfo().getTotalSize());
+    }
+
     public Vector3 getPlotPosition(final int x, final int y, final int z) {
         return new Vector3(x * this.getProvider().getGeneratorInfo().getTotalSize(), y, z * this.getProvider().getGeneratorInfo().getTotalSize()).add(2, 0, 2);
     }
+
+    public Vector3 getPlotPosition(final int x, final int z) {
+        return new Vector3(x * this.getProvider().getGeneratorInfo().getTotalSize(), this.getProvider().getGeneratorInfo().getHeight(), z * this.getProvider().getGeneratorInfo().getTotalSize()).add(2, 0, 2);
+    }
+
 
     public Vector3 getMiddle(final int x, final int z) {
         return getPosition(x, z, 65).add((float) this.getProvider().getGeneratorInfo().getPlotSize() / 2, 0, (float) this.getProvider().getGeneratorInfo().getPlotSize() / 2).add(-2, 0, -2);
@@ -59,31 +85,79 @@ public class Api {
     }
 
     public Plot getPlot(final int x, final int z) {
-        // TODO: Plot mit Datenbank verbinden
-        return new Plot(x, z, false);
+        return this.getProvider().getPlot(x, z);
     }
 
     @RequiredArgsConstructor
     public static class Provider {
 
         private final QuadPlots plugin;
-        //private final MongoClientURI uri;
+        private final MongoClientURI uri;
+        private final String database, collection;
         private MongoClient client;
+        private MongoCollection<Document> coll;
         private Config plotWorld;
+        private final Map<String, Plot> plots = new HashMap<>();
 
         public void connect() {
-            //this.client = new MongoClient(uri);
+            this.plugin.getLogger().info("§eVerbindung zur Datenbank wird hergestellt...");
+            this.client = new MongoClient(uri);
+            this.coll = this.client.getDatabase(database).getCollection(collection);
+
             this.plotWorld = new Config(this.plugin.getDataFolder() + "/data/generator.yml");
             this.plotWorld.save();
             this.plotWorld.reload();
+            this.plugin.getLogger().info("§aErfolgreich mit der Datenbank verbunden.");
+
+            this.plugin.getLogger().info("§ePlots werden in den Cache geladen...");
+            for (Document doc : this.coll.find()) {
+                final String id = doc.getString("_id");
+                final int x = Integer.parseInt(id.split(";")[0]);
+                final int z = Integer.parseInt(id.split(";")[1]);
+
+                this.plots.put(
+                        doc.getString("_id"),
+                        new Plot(x, z, true,
+                                doc.getString("owner"),
+                                doc.getList("members", String.class),
+                                doc.getList("helpers", String.class),
+                                doc.getList("flags", String.class))
+                );
+            }
+            this.plugin.getLogger().info("§a" + this.plots.size() + " Plots wurden in den Cache geladen.");
+        }
+
+        public Plot getPlot(int x, int z) {
+            final String id = x + ";" + z;
+            return plots.containsKey(id) ? plots.get(id) : new Plot(x, z, false);
         }
 
         public void updatePlot(Plot plot) {
-            // todo
+            CompletableFuture.runAsync(() -> {
+                final Document doc = this.coll.find(new Document("_id", plot.getStringId())).first();
+                if (doc != null) {
+                    this.coll.updateOne(new Document("_id", plot.getStringId()),
+                            new Document("$set", new Document("owner", plot.getOwner()))
+                                    .append("members", plot.getMembers())
+                                    .append("helpers", plot.getHelpers())
+                                    .append("flags", plot.getFlags())
+                    );
+                } else {
+                    this.coll.insertOne(
+                            new Document("_id", plot.getStringId())
+                                    .append("owner", plot.getOwner())
+                                    .append("members", new ArrayList<String>())
+                                    .append("helpers", new ArrayList<String>())
+                                    .append("flags", new ArrayList<String>())
+                    );
+                }
+            });
+            this.plots.put(plot.getStringId(), plot);
         }
 
         public void unclaimPlot(Plot plot) {
-
+            CompletableFuture.runAsync(() -> this.coll.deleteOne(new Document("_id", plot.getStringId())));
+            this.plots.remove(plot.getStringId());
         }
 
         public PlotGeneratorInfo getGeneratorInfo() {

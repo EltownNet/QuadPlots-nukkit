@@ -13,7 +13,7 @@ import java.util.List;
 public class Plot {
 
     private final int x, z;
-    private final boolean claimed;
+    private boolean claimed;
     private String owner = "";
     private List<String> members = new ArrayList<>(), helpers = new ArrayList<>(), flags = new ArrayList<>();
 
@@ -41,8 +41,19 @@ public class Plot {
         QuadPlots.getApi().getProvider().unclaimPlot(this);
     }
 
+    public void claim(final String owner) {
+        this.owner = owner;
+        this.claimed = true;
+
+        QuadPlots.getApi().getProvider().updatePlot(this);
+    }
+
     public void clear() {
         // todo: unclaim
+    }
+
+    public String getStringId() {
+        return x + ";" + z;
     }
 
 }
