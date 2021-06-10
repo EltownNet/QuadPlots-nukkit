@@ -20,7 +20,7 @@ public class InfoCommand extends PlotCommand {
         if (sender.isPlayer()) {
             final Player player = (Player) sender;
             final Plot plot = QuadPlots.getApi().getPlotByPosition(player.getPosition());
-            player.sendMessage(plot != null ? Language.getNP("info.command", plot.getX(), plot.getZ(), plot.getOwner()) : Language.get("not.in.a.plot"));
+            player.sendMessage(plot != null ? Language.getNP("info.command", plot.getX(), plot.getZ(), String.join(", ", plot.getOwners())) : Language.get("not.in.a.plot"));
         }
     }
 }

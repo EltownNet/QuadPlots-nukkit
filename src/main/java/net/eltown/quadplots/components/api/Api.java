@@ -1,8 +1,9 @@
 package net.eltown.quadplots.components.api;
 
+import cn.nukkit.Player;
+import cn.nukkit.Server;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.Config;
-import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
@@ -14,11 +15,9 @@ import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.data.PlotGeneratorInfo;
 import org.bson.Document;
 
-import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Api {
 
@@ -27,6 +26,8 @@ public class Api {
     private final QuadPlots plugin;
     @Getter
     private Provider provider;
+    public final int defaultPlots = 2;
+
 
     public Api(final QuadPlots plugin) {
         this.plugin = plugin;
@@ -44,6 +45,27 @@ public class Api {
         );
 
         this.provider.connect();
+    }
+
+    public int getMaxPlots(final Player player) {
+        if (player.isOp()) return Integer.MAX_VALUE;
+        final AtomicInteger plots = new AtomicInteger(this.defaultPlots);
+
+        player.getEffectivePermissions().keySet().forEach((perm) -> {
+            if (perm.startsWith("plots.claim.")) {
+                String max = perm.replace("plots.claim.", "");
+                if (max.equalsIgnoreCase("unlimited")) {
+                    plots.set(Integer.MAX_VALUE);
+                } else {
+                    try {
+                        final int num = Integer.parseInt(max);
+                        if (num > plots.get()) plots.set(num);
+                    } catch (NumberFormatException ex) {}
+                }
+            }
+        });
+
+        return plots.get();
     }
 
     public Vector3 getPosition(final int x, final int z, final int y) {
@@ -97,7 +119,7 @@ public class Api {
         private MongoClient client;
         private MongoCollection<Document> coll;
         private Config plotWorld;
-        private final Map<String, Plot> plots = new HashMap<>();
+        private final LinkedHashMap<String, Plot> plots = new LinkedHashMap<>();
 
         public void connect() {
             this.plugin.getLogger().info("§eVerbindung zur Datenbank wird hergestellt...");
@@ -118,9 +140,10 @@ public class Api {
                 this.plots.put(
                         doc.getString("_id"),
                         new Plot(x, z, true,
-                                doc.getString("owner"),
-                                doc.getList("members", String.class),
+                                doc.getList("owners", String.class),
+                                doc.getList("trusted", String.class),
                                 doc.getList("helpers", String.class),
+                                doc.getList("banned", String.class),
                                 doc.getList("flags", String.class))
                 );
             }
@@ -132,26 +155,52 @@ public class Api {
             return plots.containsKey(id) ? plots.get(id) : new Plot(x, z, false);
         }
 
+        public int getPlotAmount(final String player) {
+            final AtomicInteger amount = new AtomicInteger(0);
+            this.plots.values().forEach((p) -> {
+                if (p.isOwner(player)) amount.set(amount.get() + 1);
+            });
+            return amount.get();
+        }
+
+        public LinkedList<Plot> getPlots(String player) {
+            final LinkedList<Plot> plots = new LinkedList<>();
+
+            for (final Plot plot : this.plots.values()) {
+                if (plot.isOwner(player)) plots.add(plot);
+            }
+
+            return plots;
+        }
+
         public void updatePlot(Plot plot) {
             CompletableFuture.runAsync(() -> {
                 final Document doc = this.coll.find(new Document("_id", plot.getStringId())).first();
                 if (doc != null) {
-                    this.coll.updateOne(new Document("_id", plot.getStringId()),
-                            new Document("$set", new Document("owner", plot.getOwner()))
-                                    .append("members", plot.getMembers())
-                                    .append("helpers", plot.getHelpers())
-                                    .append("flags", plot.getFlags())
-                    );
+                    try {
+                        this.coll.updateOne(new Document("_id", plot.getStringId()),
+                                new Document("$set",
+                                        new Document("owners", plot.getOwners()))
+                                        .append("trusted", plot.getTrusted())
+                                        .append("helpers", plot.getHelpers())
+                                        .append("banned", plot.getBanned())
+                                        .append("flags", plot.getFlags())
+                        );
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 } else {
                     this.coll.insertOne(
                             new Document("_id", plot.getStringId())
-                                    .append("owner", plot.getOwner())
-                                    .append("members", new ArrayList<String>())
+                                    .append("owners", plot.getOwners())
+                                    .append("trusted", new ArrayList<String>())
                                     .append("helpers", new ArrayList<String>())
+                                    .append("banned", new ArrayList<String>())
                                     .append("flags", new ArrayList<String>())
                     );
                 }
             });
+
             this.plots.put(plot.getStringId(), plot);
         }
 
@@ -162,15 +211,67 @@ public class Api {
 
         public PlotGeneratorInfo getGeneratorInfo() {
             return new PlotGeneratorInfo(
-                    "Plots",
+                    "plots",
                     64,
-                    32,
+                    52,
                     4,
                     new int[]{2, 0},
                     new int[]{44, 0},
                     new int[]{155, 0},
-                    new int[]{1, 0}
+                    new int[]{1, 0},
+                    new int[]{44, 1}
             );
+        }
+
+        public Plot findFreePlot(int amplifierX, int amplifierZ) {
+            if (plots.size() == 0) return getPlot(0, 0);
+
+            // ToDo: Derzeit geht es nur wenn das erste Plot bei X: 0 und Z: 0 ist.
+
+            int lastX = 0;
+            int lastZ = 0;
+
+            for (Plot plot : plots.values()) {
+
+                int x = plot.getX() - lastX;
+                int y = plot.getZ() - lastZ;
+                int diff = Math.abs(x * y);
+
+                if (diff < 4) {
+                    lastX = plot.getX();
+                    lastZ = plot.getZ();
+                    // - |
+                    Plot cb = getPlot(plot.getX() + 1, plot.getZ());
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX(), plot.getZ() + 1);
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX() - 1, plot.getZ());
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX(), plot.getZ() - 1);
+                    if (!cb.isClaimed()) return cb;
+
+                    // / \
+                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() - 1 + amplifierZ);
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() + 1 + amplifierZ);
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() - 1 + amplifierZ);
+                    if (!cb.isClaimed()) return cb;
+
+                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() + 1 + amplifierZ);
+                    if (!cb.isClaimed()) return cb;
+                }
+            }
+
+            amplifierX += 1;
+            amplifierZ -= 1;
+
+            return findFreePlot(amplifierX, amplifierZ);
         }
 
     }

@@ -54,7 +54,7 @@ public class ClearTask extends Task {
                             if (this.start.getY() == this.gen.getHeight()) {
                                 block = Block.get(this.gen.getGround()[0], this.gen.getGround()[1]);
                             } else if (this.start.getY() < this.gen.getHeight()) {
-                                block = this.start.getY() != 0 ? Block.get(this.gen.getFill()[0], this.gen.getFill()[1]) : Block.get(BlockID.AIR);
+                                block = this.start.getY() != 0 ? Block.get(this.gen.getFill()[0], this.gen.getFill()[1]) : Block.get(BlockID.BEDROCK);
                             } else block = Block.get(BlockID.AIR);
                             chunk.setBlockAt((int) this.start.getX(), (int) this.start.getY(), (int) this.start.getZ(), block.getId(), block.getDamage());
                             //this.level.setBlock(this.start, block);

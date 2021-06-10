@@ -7,7 +7,7 @@ public class PlotGeneratorInfo {
 
     private final String level;
     private final int height, plotSize, roadWidth;
-    private final int[] ground, border, road, fill;
+    private final int[] ground, border, road, fill, borderClaimed;
 
     public int getTotalSize() {
         return plotSize + roadWidth;

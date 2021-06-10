@@ -5,8 +5,10 @@ import cn.nukkit.plugin.PluginBase;
 import lombok.Getter;
 import net.eltown.quadplots.commands.RootCommand;
 import net.eltown.quadplots.components.api.Api;
+import net.eltown.quadplots.components.forms.FormListener;
 import net.eltown.quadplots.components.generator.PlotGenerator;
 import net.eltown.quadplots.components.language.Language;
+import net.eltown.quadplots.components.listener.PlayerListener;
 
 import java.util.HashMap;
 
@@ -27,10 +29,12 @@ public class QuadPlots extends PluginBase {
     @Override
     public void onEnable() {
         this.getServer().getCommandMap().register("plot", new RootCommand(this));
+        this.getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+        this.getServer().getPluginManager().registerEvents(new FormListener(), this);
     }
 
     public void generate() {
-        getServer().generateLevel("Plots", 0, Generator.getGenerator("Plots"), new HashMap<>());
+        getServer().generateLevel("plots", 0, Generator.getGenerator("Plots"), new HashMap<>());
     }
 
 }
