@@ -180,12 +180,11 @@ public class Api {
                     try {
                         this.coll.updateOne(new Document("_id", plot.getStringId()),
                                 new Document("$set",
-                                        new Document("owners", plot.getOwners()))
+                                        new Document("owners", plot.getOwners())
                                         .append("trusted", plot.getTrusted())
                                         .append("helpers", plot.getHelpers())
                                         .append("banned", plot.getBanned())
-                                        .append("flags", plot.getFlags())
-                        );
+                                        .append("flags", plot.getFlags())));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
