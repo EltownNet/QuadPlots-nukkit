@@ -1,5 +1,7 @@
 package net.eltown.quadplots;
 
+import cn.nukkit.block.Block;
+import cn.nukkit.block.BlockID;
 import cn.nukkit.level.generator.Generator;
 import cn.nukkit.plugin.PluginBase;
 import lombok.Getter;
@@ -11,11 +13,29 @@ import net.eltown.quadplots.components.language.Language;
 import net.eltown.quadplots.components.listener.PlayerListener;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class QuadPlots extends PluginBase {
 
     @Getter
     private static Api api;
+
+
+    @Getter
+    private static final Map<Block, Double> borders = new HashMap<>();
+
+    static {
+
+
+        borders.put(Block.get(0), 200d);
+        borders.put(Block.get(44, 1), 0d);
+        borders.put(Block.get(44, 2), 100d);
+        borders.put(Block.get(44, 3), 100d);
+        borders.put(Block.get(44, 4), 100d);
+        borders.put(Block.get(44, 5), 100d);
+        borders.put(Block.get(44, 6), 100d);
+        borders.put(Block.get(44, 7), 100d);
+    }
 
     @Override
     public void onLoad() {

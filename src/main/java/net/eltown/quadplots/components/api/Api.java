@@ -27,6 +27,7 @@ public class Api {
     @Getter
     private Provider provider;
     public final int defaultPlots = 2;
+    private final Set<String> managers = new HashSet<>();
 
 
     public Api(final QuadPlots plugin) {
@@ -47,6 +48,20 @@ public class Api {
         this.provider.connect();
     }
 
+    public boolean toggleManage(final String player) {
+        if (managers.contains(player)) {
+            managers.remove(player);
+            return false;
+        } else {
+            managers.add(player);
+            return true;
+        }
+    }
+
+    public boolean isManager(final String player) {
+        return managers.contains(player);
+    }
+
     public int getMaxPlots(final Player player) {
         if (player.isOp()) return Integer.MAX_VALUE;
         final AtomicInteger plots = new AtomicInteger(this.defaultPlots);
@@ -60,7 +75,8 @@ public class Api {
                     try {
                         final int num = Integer.parseInt(max);
                         if (num > plots.get()) plots.set(num);
-                    } catch (NumberFormatException ex) {}
+                    } catch (NumberFormatException ex) {
+                    }
                 }
             }
         });
@@ -86,7 +102,7 @@ public class Api {
 
 
     public Vector3 getMiddle(final int x, final int z) {
-        return getPosition(x, z, 65).add((float) this.getProvider().getGeneratorInfo().getPlotSize() / 2, 0, (float) this.getProvider().getGeneratorInfo().getPlotSize() / 2).add(-2, 0, -2);
+        return getPosition(x, z, 65).add((float) this.getProvider().getGeneratorInfo().getPlotSize() / 2, 0, (float) this.getProvider().getGeneratorInfo().getPlotSize() / 2)/*.add(-2, 0, -2)*/;
     }
 
     public Vector3 getChunkPosition(int x, int z) {
@@ -143,8 +159,8 @@ public class Api {
                                 doc.getList("owners", String.class),
                                 doc.getList("trusted", String.class),
                                 doc.getList("helpers", String.class),
-                                doc.getList("banned", String.class),
-                                doc.getList("flags", String.class))
+                                doc.getList("flags", String.class),
+                                doc.getList("banned", String.class))
                 );
             }
             this.plugin.getLogger().info("§a" + this.plots.size() + " Plots wurden in den Cache geladen.");
@@ -180,11 +196,11 @@ public class Api {
                     try {
                         this.coll.updateOne(new Document("_id", plot.getStringId()),
                                 new Document("$set",
-                                        new Document("owners", plot.getOwners())
-                                        .append("trusted", plot.getTrusted())
-                                        .append("helpers", plot.getHelpers())
-                                        .append("banned", plot.getBanned())
-                                        .append("flags", plot.getFlags())));
+                                        new Document("owners", new ArrayList<>(plot.getOwners()))
+                                                .append("trusted", new ArrayList<>(plot.getTrusted()))
+                                                .append("helpers", new ArrayList<>(plot.getHelpers()))
+                                                .append("banned", new ArrayList<>(plot.getBanned()))
+                                                .append("flags", new ArrayList<>(plot.getFlags()))));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

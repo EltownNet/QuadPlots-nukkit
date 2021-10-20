@@ -4,6 +4,7 @@ import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.defaults.PluginsCommand;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.commands.PlotCommand;
 import net.eltown.quadplots.components.data.Plot;
@@ -37,7 +38,7 @@ public class ResetCommand extends PlotCommand {
                     return;
                 }
 
-                if (plot.isOwner(player.getName())) {
+                if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
                     player.sendMessage(Language.get("plot.resetting"));
                     Server.getInstance().getScheduler().scheduleTask(new ClearTask(plot, player.getLevel()));
                     final int borderId = QuadPlots.getApi().getProvider().getGeneratorInfo().getBorder()[0];
@@ -47,6 +48,7 @@ public class ResetCommand extends PlotCommand {
                     Server.getInstance().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(borderId, borderDamage), player.getLevel()));
                     Server.getInstance().getScheduler().scheduleTask(new ChangeWallTask(plot, Block.get(wallId, wallDamage), player.getLevel()));
                     plot.unclaim();
+                    if (QuadPlots.getApi().isManager(player.getName())) PluginsCommand.broadcastCommandMessage(player, "Resetted Plot " + plot.getX() + "|" + plot.getZ(), false);
                 } else player.sendMessage(Language.get("no.plot.permission"));
             } else player.sendMessage(Language.get("not.in.a.plot"));
         }

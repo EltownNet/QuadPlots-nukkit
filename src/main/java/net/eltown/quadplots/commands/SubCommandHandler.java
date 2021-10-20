@@ -29,7 +29,21 @@ public class SubCommandHandler {
                 new ResetCommand(plugin),
                 new DisposeCommand(plugin),
                 new HelpCommand(plugin),
-                new AutoCommand(plugin)
+                new AutoCommand(plugin),
+                new ListCommand(plugin),
+                new SetinfoCommand(plugin),
+                new KickCommand(plugin),
+                new BanCommand(plugin),
+                new UnbanCommand(plugin),
+                new MiddleCommand(plugin),
+                new AddCommand(plugin),
+                new RemoveCommand(plugin),
+                new TrustCommand(plugin),
+                new UntrustCommand(plugin),
+                new SetownerCommand(plugin),
+                new AddownerCommand(plugin),
+                new ManageCommand(plugin),
+                new BorderCommand(plugin)
         ));
     }
 

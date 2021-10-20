@@ -4,6 +4,7 @@ import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.defaults.PluginsCommand;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.commands.PlotCommand;
 import net.eltown.quadplots.components.data.Plot;
@@ -36,9 +37,10 @@ public class DisposeCommand extends PlotCommand {
                     return;
                 }
 
-                if (plot.isOwner(player.getName())) {
+                if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
                     player.sendMessage(Language.get("plot.disposing"));
                     plot.unclaim();
+                    if (QuadPlots.getApi().isManager(player.getName())) PluginsCommand.broadcastCommandMessage(player, "Disposed Plot " + plot.getX() + "|" + plot.getZ(), false);
                 } else player.sendMessage(Language.get("no.plot.permission"));
             } else player.sendMessage(Language.get("not.in.a.plot"));
         }

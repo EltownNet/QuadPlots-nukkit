@@ -34,10 +34,30 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongo-java-driver</artifactId>
+      <version>3.10.2</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.8</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>economy</groupId>
+      <artifactId>economy</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/libs/Economy-1.0.0-SNAPSHOT.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>core</groupId>
+      <artifactId>core</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/libs/ServerCore-1.0-SNAPSHOT.jar</systemPath>
     </dependency>
   </dependencies>
   <properties>

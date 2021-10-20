@@ -1,4 +1,8 @@
 name: QuadPlots
-version: 1.0.0
+version: 1.0.0-SNAPSHOT
+author: Justin
 main: net.eltown.quadplots.QuadPlots
+description: PlotSystem von Eltown
 api: 1.0.0
+depend:
+  - Drivers

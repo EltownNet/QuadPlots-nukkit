@@ -5,6 +5,7 @@ import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.block.BlockID;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.defaults.PluginsCommand;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.commands.PlotCommand;
 import net.eltown.quadplots.components.data.Plot;
@@ -37,9 +38,10 @@ public class ClearCommand extends PlotCommand {
                     return;
                 }
 
-                if (plot.isOwner(player.getName())) {
+                if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
                     player.sendMessage(Language.get("plot.clearing"));
                     Server.getInstance().getScheduler().scheduleTask(new ClearTask(plot, player.getLevel()));
+                    if (QuadPlots.getApi().isManager(player.getName())) PluginsCommand.broadcastCommandMessage(player, "Cleared Plot " + plot.getX() + "|" + plot.getZ(), false);
                 } else player.sendMessage(Language.get("no.plot.permission"));
             } else player.sendMessage(Language.get("not.in.a.plot"));
         }

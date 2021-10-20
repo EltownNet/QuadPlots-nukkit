@@ -27,6 +27,14 @@ public class AutoCommand extends PlotCommand {
             if (sender.isPlayer()) {
 
                 final Player player = (Player) sender;
+
+                final int maxPlots = QuadPlots.getApi().getMaxPlots(player), currentPlots = QuadPlots.getApi().getProvider().getPlotAmount(player.getName());
+
+                if (currentPlots >= maxPlots) {
+                    player.sendMessage(Language.get("plots.max"));
+                    return;
+                }
+
                 player.sendMessage(Language.get("plot.searching"));
 
                 final Plot plot = QuadPlots.getApi().getProvider().findFreePlot(0, 0);

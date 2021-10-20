@@ -4,7 +4,6 @@ import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.block.BlockID;
 import cn.nukkit.command.CommandSender;
-import cn.nukkit.command.defaults.PluginsCommand;
 import cn.nukkit.form.element.ElementButton;
 import cn.nukkit.form.element.ElementButtonImageData;
 import lombok.AllArgsConstructor;
@@ -16,36 +15,45 @@ import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.forms.modal.ModalForm;
 import net.eltown.quadplots.components.forms.simple.SimpleForm;
 import net.eltown.quadplots.components.language.Language;
+import net.eltown.quadplots.components.tasks.ChangeBorderTask;
 import net.eltown.quadplots.components.tasks.ChangeWallTask;
-import net.eltown.servercore.ServerCore;
 import net.eltown.servercore.components.api.ServerCoreAPI;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
-public class WallCommand extends PlotCommand {
+public class BorderCommand extends PlotCommand {
 
-    private static final LinkedHashSet<Wall> walls = new LinkedHashSet<>();
+    private static final LinkedHashSet<Border> border = new LinkedHashSet<>();
 
-    public WallCommand(final QuadPlots plugin) {
-        super(plugin, "wand", "Ändere die Wand deines Plots.", "/p wand", Collections.singletonList("wall"), false);
+    public BorderCommand(final QuadPlots plugin) {
+        super(plugin, "rand", "Ändere den Rand deines Plots.", "/p rand", Collections.singletonList("border"), false);
     }
 
     static {
-        walls.addAll(
+        border.addAll(
                 Arrays.asList(
-                        new Wall(Block.get(BlockID.QUARTZ_BLOCK), 0.99),
-                        new Wall(Block.get(BlockID.STONE), 99.95),
-                        new Wall(Block.get(BlockID.DIRT), 29.95)
+                        new Border(Block.get(BlockID.AIR, 0), 299.95),
+                        new Border(Block.get(BlockID.SLAB, 0), 0.99),
+                        new Border(Block.get(BlockID.SLAB, 1), 0.99),
+                        new Border(Block.get(BlockID.SLAB, 5), 129.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 0), 99.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 1), 99.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 2), 99.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 3), 99.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 4), 99.95),
+                        new Border(Block.get(BlockID.WOODEN_SLAB, 5), 99.95)
                 )
         );
     }
 
     private boolean hasBlock(final Player player, final Block block) {
-        return player.hasPermission("plot.wall." + block.getId() + "-" + block.getDamage());
+        return player.hasPermission("plot.border." + block.getId() + "-" + block.getDamage());
     }
 
     private ElementButtonImageData getImage(final Block block) {
-        return new ElementButtonImageData("url", "http://45.138.50.23:3000/img/ui/plot/wall/" + block.getId() + "-" + block.getDamage() + ".png");
+        return new ElementButtonImageData("url", "http://45.138.50.23:3000/img/ui/plot/border/" + block.getId() + "-" + block.getDamage() + ".png");
     }
 
     @Override
@@ -57,19 +65,19 @@ public class WallCommand extends PlotCommand {
 
             if (plot != null) {
                 if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
-                    final SimpleForm.Builder builder = new SimpleForm.Builder("Plot-Wand", "Hier kannst du die Wände deines Plots ändern.");
+                    final SimpleForm.Builder builder = new SimpleForm.Builder("Plot-Rand", "Hier kannst du den Rand deines Plots ändern.");
 
-                    walls.forEach(wall -> {
+                    border.forEach(wall -> {
 
                         final Block block = wall.getBlock();
                         final double price = wall.getPrice();
 
                         if (this.hasBlock(player, block)) {
                             builder.addButton(new ElementButton(block.getName() + "\n§2Im Besitz", this.getImage(block)), (p) -> {
-                                new ModalForm.Builder("Plot-Wand Ändern", "Möchtest du die Wand deines Plots zu §9" + block.getName() + "§r ändern?", "§aJa", "§cZurück")
+                                new ModalForm.Builder("Plot-Rand ändern", "Möchtest du den Rand deines Plots zu §9" + block.getName() + "§r ändern?", "§aJa", "§cZurück")
                                         .onYes((p1) -> {
-                                            this.getPlugin().getServer().getScheduler().scheduleTask(new ChangeWallTask(plot, Block.get(block.getId(), block.getDamage()), player.getLevel()));
-                                            player.sendMessage(Language.get("wall.change", block.getName()));
+                                            this.getPlugin().getServer().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(block.getId(), block.getDamage()), player.getLevel()));
+                                            player.sendMessage(Language.get("border.change", block.getName()));
                                         })
                                         .onNo((p1) -> {
                                             builder.build().send(player);
@@ -78,13 +86,13 @@ public class WallCommand extends PlotCommand {
                             });
                         } else {
                             builder.addButton(new ElementButton(block.getName() + "\n§0Kaufen für §a$" + Economy.getAPI().getMoneyFormat().format(price), this.getImage(block)), (p) -> {
-                                new ModalForm.Builder("Plotwand kaufen", "Möchtest du die Plotwand §9" + block.getName() + " §rfür §a$" + Economy.getAPI().getMoneyFormat().format(price) + "§r kaufen?", "§aJa", "§cZurück")
+                                new ModalForm.Builder("Plot-Rand kaufen", "Möchtest du den Plot-Rand §9" + block.getName() + " §rfür §a$" + Economy.getAPI().getMoneyFormat().format(price) + "§r kaufen?", "§aJa", "§cZurück")
                                         .onYes((p1) -> {
                                             Economy.getAPI().getMoney(player, (money) -> {
                                                 if (!(price > money)) {
-                                                    ServerCoreAPI.getGroupAPI().addPlayerPermission(player.getName(), "plot.wall." + block.getId() + "-" + block.getDamage());
+                                                    ServerCoreAPI.getGroupAPI().addPlayerPermission(player.getName(), "plot.border." + block.getId() + "-" + block.getDamage());
                                                     Economy.getAPI().reduceMoney(player, price);
-                                                    player.sendMessage(Language.get("wall.bought"));
+                                                    player.sendMessage(Language.get("border.bought"));
                                                 } else player.sendMessage(Language.get("not.enough.money"));
                                             });
                                         })
@@ -107,7 +115,7 @@ public class WallCommand extends PlotCommand {
 
     @Getter
     @AllArgsConstructor
-    private static class Wall {
+    private static class Border {
 
         private final Block block;
         private final double price;
