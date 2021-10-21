@@ -51,11 +51,16 @@ public class WallCommand extends PlotCommand {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if (sender.isPlayer()) {
+
             final Player player = (Player) sender;
 
             final Plot plot = QuadPlots.getApi().getPlotByPosition(player.getPosition());
 
             if (plot != null) {
+                if (plot.isMerged()) {
+                    sender.sendMessage(Language.get("plot.merge.command"));
+                    return;
+                }
                 if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
                     final SimpleForm.Builder builder = new SimpleForm.Builder("Plot-Wand", "Hier kannst du die Wände deines Plots ändern.");
 

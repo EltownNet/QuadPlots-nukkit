@@ -3,8 +3,6 @@ package net.eltown.quadplots.components.listener;
 import cn.nukkit.AdventureSettings;
 import cn.nukkit.Player;
 import cn.nukkit.Server;
-import cn.nukkit.block.Block;
-import cn.nukkit.block.BlockID;
 import cn.nukkit.event.Event;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
@@ -21,6 +19,7 @@ import cn.nukkit.item.ItemEdible;
 import cn.nukkit.level.Location;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.components.data.Plot;
+import net.eltown.quadplots.components.data.Road;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
@@ -104,7 +103,12 @@ public class PlayerListener implements Listener {
             final Plot plot = QuadPlots.getApi().getPlotByPosition(event.getBlock().getLocation());
             if (plot != null) {
                 if (!plot.canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
-            } else this.cancel(event.getPlayer(), event);
+            } else {
+                final Road road = QuadPlots.getApi().getRoad(event.getBlock().getLocation());
+                if (road != null && road.isMerged()) {
+                    if (!road.getPlot().canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
+                } else this.cancel(event.getPlayer(), event);
+            }
         }
     }
 
@@ -115,7 +119,12 @@ public class PlayerListener implements Listener {
             final Plot plot = QuadPlots.getApi().getPlotByPosition(event.getBlock().getLocation());
             if (plot != null) {
                 if (!plot.canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
-            } else this.cancel(event.getPlayer(), event);
+            } else {
+                final Road road = QuadPlots.getApi().getRoad(event.getBlock().getLocation());
+                if (road != null && road.isMerged()) {
+                    if (!road.getPlot().canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
+                } else this.cancel(event.getPlayer(), event);
+            }
         }
     }
 
@@ -128,7 +137,12 @@ public class PlayerListener implements Listener {
             final Plot plot = QuadPlots.getApi().getPlotByPosition(event.getBlock() != null ? event.getBlock().getLocation() : event.getPlayer().getPosition());
             if (plot != null) {
                 if (!plot.canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
-            } else this.cancel(event.getPlayer(), event);
+            }  else {
+                final Road road = QuadPlots.getApi().getRoad(event.getBlock().getLocation());
+                if (road != null && road.isMerged()) {
+                    if (!road.getPlot().canBuild(event.getPlayer().getName())) this.cancel(event.getPlayer(), event);
+                } else this.cancel(event.getPlayer(), event);
+            }
         }
     }
 

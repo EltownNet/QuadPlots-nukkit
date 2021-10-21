@@ -2,6 +2,7 @@ package net.eltown.quadplots.components.api;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.utils.Config;
 import com.mongodb.MongoClient;
@@ -13,6 +14,8 @@ import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.commands.SubCommandHandler;
 import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.data.PlotGeneratorInfo;
+import net.eltown.quadplots.components.data.Road;
+import net.eltown.quadplots.components.math.Direction;
 import org.bson.Document;
 
 import java.util.*;
@@ -60,6 +63,23 @@ public class Api {
 
     public boolean isManager(final String player) {
         return managers.contains(player);
+    }
+
+    public Road getRoad(final Position position) {
+        // -x -y
+
+        final Vector3 xSide = new Vector3(position.x, position.y, position.z);
+        final Vector3 ySide = new Vector3(position.x, position.y, position.z);
+
+        for (int i = 0; i < 7; i++) {
+            final Plot xPlot = this.getPlotByPosition(xSide.add(i), false);
+            final Plot yPlot = this.getPlotByPosition(ySide.add(0, 0, i), false);
+
+            if (xPlot != null) return new Road(xPlot, Direction.WEST);
+            if (yPlot != null) return new Road(yPlot, Direction.NORTH);
+        }
+
+        return null;
     }
 
     public int getMaxPlots(final Player player) {
@@ -110,6 +130,10 @@ public class Api {
     }
 
     public Plot getPlotByPosition(final Vector3 position) {
+        return this.getPlotByPosition(position, true);
+    }
+
+    public Plot getPlotByPosition(final Vector3 position, final boolean checkOrigin) {
         int X = position.getX() >= 0 ? (int) Math.floor(position.getX() / this.getProvider().getGeneratorInfo().getTotalSize()) : (int) Math.ceil((position.getX() - this.getProvider().getGeneratorInfo().getPlotSize() + 1) / this.getProvider().getGeneratorInfo().getTotalSize());//(int) position.getX() / this.getProvider().getGeneratorInfo().getTotalSize();
         int Z = position.getZ() >= 0 ? (int) Math.floor(position.getZ() / this.getProvider().getGeneratorInfo().getTotalSize()) : (int) Math.ceil((position.getZ() - this.getProvider().getGeneratorInfo().getPlotSize() + 1) / this.getProvider().getGeneratorInfo().getTotalSize());//(int) position.getX() / this.getProvider().getGeneratorInfo().getTotalSize();
 
@@ -118,12 +142,16 @@ public class Api {
 
         if (difX >= this.getProvider().getGeneratorInfo().getPlotSize() - 1 || difZ >= this.getProvider().getGeneratorInfo().getPlotSize() - 1 || difX == 0 || difZ == 0) {
             return null;
-        } else return this.getPlot(X, Z);
+        } else return this.getPlot(X, Z, checkOrigin);
 
     }
 
     public Plot getPlot(final int x, final int z) {
-        return this.getProvider().getPlot(x, z);
+        return this.getPlot(x, z, true);
+    }
+
+    public Plot getPlot(final int x, final int z, final boolean checkOrigin) {
+        return this.getProvider().getPlot(x, z, checkOrigin);
     }
 
     @RequiredArgsConstructor
@@ -166,9 +194,14 @@ public class Api {
             this.plugin.getLogger().info("§a" + this.plots.size() + " Plots wurden in den Cache geladen.");
         }
 
-        public Plot getPlot(int x, int z) {
+        public Plot getPlot(int x, int z, boolean checkOrigin) {
             final String id = x + ";" + z;
-            return plots.containsKey(id) ? plots.get(id) : new Plot(x, z, false);
+            if (plots.containsKey(id)) {
+                Plot plot = plots.get(id);
+                if (checkOrigin && plot.isMerged() && !plot.isOrigin()) plot = plot.getOrigin();
+                return plot;
+            } else return new Plot(x, z, false);
+            //return plots.containsKey(id) ? plots.get(id) : new Plot(x, z, false);
         }
 
         public int getPlotAmount(final String player) {
@@ -239,7 +272,7 @@ public class Api {
         }
 
         public Plot findFreePlot(int amplifierX, int amplifierZ) {
-            if (plots.size() == 0) return getPlot(0, 0);
+            if (plots.size() == 0) return getPlot(0, 0, false);
 
             // ToDo: Derzeit geht es nur wenn das erste Plot bei X: 0 und Z: 0 ist.
 
@@ -256,29 +289,29 @@ public class Api {
                     lastX = plot.getX();
                     lastZ = plot.getZ();
                     // - |
-                    Plot cb = getPlot(plot.getX() + 1, plot.getZ());
+                    Plot cb = getPlot(plot.getX() + 1, plot.getZ(), false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX(), plot.getZ() + 1);
+                    cb = getPlot(plot.getX(), plot.getZ() + 1, false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX() - 1, plot.getZ());
+                    cb = getPlot(plot.getX() - 1, plot.getZ(), false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX(), plot.getZ() - 1);
+                    cb = getPlot(plot.getX(), plot.getZ() - 1, false);
                     if (!cb.isClaimed()) return cb;
 
                     // / \
-                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() - 1 + amplifierZ);
+                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() - 1 + amplifierZ, false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() + 1 + amplifierZ);
+                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() + 1 + amplifierZ, false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() - 1 + amplifierZ);
+                    cb = getPlot(plot.getX() - 1 + amplifierX, plot.getZ() - 1 + amplifierZ, false);
                     if (!cb.isClaimed()) return cb;
 
-                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() + 1 + amplifierZ);
+                    cb = getPlot(plot.getX() + 1 + amplifierX, plot.getZ() + 1 + amplifierZ, false);
                     if (!cb.isClaimed()) return cb;
                 }
             }

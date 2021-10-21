@@ -27,6 +27,10 @@ public class ClearCommand extends PlotCommand {
             final Player player = (Player) sender;
             final Plot plot = QuadPlots.getApi().getPlotByPosition(player.getPosition());
             if (plot != null) {
+                if (plot.isMerged()) {
+                    sender.sendMessage(Language.get("plot.merge.command"));
+                    return;
+                }
 
                 if (args.length > 0) {
                     if (!args[0].equalsIgnoreCase("confirm")) {

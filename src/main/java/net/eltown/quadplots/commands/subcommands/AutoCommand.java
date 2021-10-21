@@ -42,7 +42,7 @@ public class AutoCommand extends PlotCommand {
                 final PlotGeneratorInfo gen = QuadPlots.getApi().getProvider().getGeneratorInfo();
                 plot.claim(player.getName());
                 player.teleport(QuadPlots.getApi().getPlotPosition(plot.getX(), (int) player.getY() + 2, plot.getZ()));
-                Server.getInstance().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(gen.getBorderClaimed()[0], gen.getBorderClaimed()[1]), player.getLevel()));
+                Server.getInstance().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(gen.getBorderClaimed()[0], gen.getBorderClaimed()[1]), player.getLevel(), true));
 
             }
         });

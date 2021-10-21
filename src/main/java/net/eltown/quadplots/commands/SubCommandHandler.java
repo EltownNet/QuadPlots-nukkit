@@ -43,7 +43,12 @@ public class SubCommandHandler {
                 new SetownerCommand(plugin),
                 new AddownerCommand(plugin),
                 new ManageCommand(plugin),
-                new BorderCommand(plugin)
+                new BorderCommand(plugin),
+                new CheckroadCommand(plugin),
+                new TestMergeCommand(plugin),
+                new DirectionCommand(plugin),
+                new MergeCommand(plugin),
+                new UnmergeCommand(plugin)
         ));
     }
 

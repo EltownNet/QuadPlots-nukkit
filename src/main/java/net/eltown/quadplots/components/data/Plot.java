@@ -38,16 +38,66 @@ public class Plot {
         this.banned.addAll(banned);
     }
 
+    public boolean isMerged() {
+        return this.flags.stream().anyMatch(s -> s.startsWith("origin"));
+    }
+
+    public boolean isOrigin() {
+        final int[] origin = this.getOriginXZ();
+        return origin[0] == this.getX() && origin[1] == this.getZ();
+    }
+
+    public Plot getOrigin() {
+        if (isOrigin()) return this;
+        for (final String str : this.flags) {
+            if (str.startsWith("origin")) {
+                final String[] split = str.split(";");
+                final String[] xzStrings = split[1].split(":");
+
+                return QuadPlots.getApi().getPlot(Integer.parseInt(xzStrings[0]), Integer.parseInt(xzStrings[1]));
+            }
+        }
+
+        return null;
+    }
+
+    public int[] getOriginXZ() {
+        for (final String str : this.flags) {
+            if (str.startsWith("origin")) {
+                final String[] split = str.split(";");
+                final String[] xzStrings = split[1].split(":");
+
+                return new int[]{Integer.parseInt(xzStrings[0]), Integer.parseInt(xzStrings[1])};
+            }
+        }
+
+        return null;
+    }
+
+    public void addMerge(final Direction direction) {
+        this.addFlag("merge;" + direction.name().toLowerCase());
+        QuadPlots.getApi().getProvider().updatePlot(this);
+    }
+
+    public void setOrigin(final Plot plot) {
+        this.addFlag("origin;" + plot.getX() + ":" + plot.getZ());
+        QuadPlots.getApi().getProvider().updatePlot(this);
+    }
+
+    public boolean hasMergeInDirection(final Direction direction) {
+        return this.flags.contains("merge;" + direction.name().toLowerCase());
+    }
+
     public Plot getSide(final Direction side) {
         switch (side) {
             case NORTH:
-                return QuadPlots.getApi().getPlot(this.x, this.z - 1);
+                return QuadPlots.getApi().getPlot(this.x, this.z - 1, false);
             case EAST:
-                return QuadPlots.getApi().getPlot(this.x + 1, this.z);
+                return QuadPlots.getApi().getPlot(this.x + 1, this.z, false);
             case SOUTH:
-                return QuadPlots.getApi().getPlot(this.x, this.z + 1);
+                return QuadPlots.getApi().getPlot(this.x, this.z + 1, false);
             case WEST:
-                return QuadPlots.getApi().getPlot(this.x - 1, this.z);
+                return QuadPlots.getApi().getPlot(this.x - 1, this.z, false);
             default:
                 return null;
         }
@@ -72,6 +122,13 @@ public class Plot {
 
     public void unclaim() {
         QuadPlots.getApi().getProvider().unclaimPlot(this);
+    }
+
+    public void unmerge() {
+        this.removeFlag("origin");
+        this.removeFlag("merge");
+
+        QuadPlots.getApi().getProvider().updatePlot(this);
     }
 
     public void claim(final String owner) {

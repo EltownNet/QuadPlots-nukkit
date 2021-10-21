@@ -64,6 +64,10 @@ public class BorderCommand extends PlotCommand {
             final Plot plot = QuadPlots.getApi().getPlotByPosition(player.getPosition());
 
             if (plot != null) {
+                if (plot.isMerged()) {
+                    sender.sendMessage(Language.get("plot.merge.command"));
+                    return;
+                }
                 if (QuadPlots.getApi().isManager(player.getName()) || plot.isOwner(player.getName())) {
                     final SimpleForm.Builder builder = new SimpleForm.Builder("Plot-Rand", "Hier kannst du den Rand deines Plots ändern.");
 
@@ -76,7 +80,7 @@ public class BorderCommand extends PlotCommand {
                             builder.addButton(new ElementButton(block.getName() + "\n§2Im Besitz", this.getImage(block)), (p) -> {
                                 new ModalForm.Builder("Plot-Rand ändern", "Möchtest du den Rand deines Plots zu §9" + block.getName() + "§r ändern?", "§aJa", "§cZurück")
                                         .onYes((p1) -> {
-                                            this.getPlugin().getServer().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(block.getId(), block.getDamage()), player.getLevel()));
+                                            this.getPlugin().getServer().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(block.getId(), block.getDamage()), player.getLevel(), true));
                                             player.sendMessage(Language.get("border.change", block.getName()));
                                         })
                                         .onNo((p1) -> {

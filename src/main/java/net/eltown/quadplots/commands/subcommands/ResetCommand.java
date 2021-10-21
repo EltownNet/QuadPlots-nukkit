@@ -27,6 +27,10 @@ public class ResetCommand extends PlotCommand {
             final Player player = (Player) sender;
             final Plot plot = QuadPlots.getApi().getPlotByPosition(player.getPosition());
             if (plot != null) {
+                if (plot.isMerged()) {
+                    sender.sendMessage(Language.get("plot.merge.command"));
+                    return;
+                }
 
                 if (args.length > 0) {
                     if (!args[0].equalsIgnoreCase("confirm")) {
@@ -45,7 +49,7 @@ public class ResetCommand extends PlotCommand {
                     final int wallId = QuadPlots.getApi().getProvider().getGeneratorInfo().getRoad()[0];
                     final int borderDamage = QuadPlots.getApi().getProvider().getGeneratorInfo().getBorder()[1];
                     final int wallDamage = QuadPlots.getApi().getProvider().getGeneratorInfo().getRoad()[1];
-                    Server.getInstance().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(borderId, borderDamage), player.getLevel()));
+                    Server.getInstance().getScheduler().scheduleTask(new ChangeBorderTask(plot, Block.get(borderId, borderDamage), player.getLevel(), true));
                     Server.getInstance().getScheduler().scheduleTask(new ChangeWallTask(plot, Block.get(wallId, wallDamage), player.getLevel()));
                     plot.unclaim();
                     if (QuadPlots.getApi().isManager(player.getName())) PluginsCommand.broadcastCommandMessage(player, "Resetted Plot " + plot.getX() + "|" + plot.getZ(), false);
