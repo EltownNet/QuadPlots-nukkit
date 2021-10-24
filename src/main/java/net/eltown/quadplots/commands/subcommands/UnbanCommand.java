@@ -14,7 +14,7 @@ import java.util.Collections;
 public class UnbanCommand extends PlotCommand {
 
     public UnbanCommand(final QuadPlots plugin) {
-        super(plugin, "ban", "Verbanne Spieler von deinem Plot.", "/p ban <spieler>", Collections.singletonList("deny"));
+        super(plugin, "unban", "Verbanne Spieler von deinem Plot.", "/p ban <spieler>", Collections.singletonList("undeny"));
     }
 
     @Override

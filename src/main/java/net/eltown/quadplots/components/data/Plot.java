@@ -38,6 +38,16 @@ public class Plot {
         this.banned.addAll(banned);
     }
 
+    public void setOwners(final String... owners) {
+        this.getOwners().clear();
+        this.getOwners().addAll(Arrays.asList(owners));
+    }
+
+    public void setFlags(final String... flags) {
+        this.getFlags().clear();
+        this.getFlags().addAll(Arrays.asList(flags));
+    }
+
     public boolean isMerged() {
         return this.flags.stream().anyMatch(s -> s.startsWith("origin"));
     }

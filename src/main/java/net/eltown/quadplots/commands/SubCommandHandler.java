@@ -48,7 +48,8 @@ public class SubCommandHandler {
                 new TestMergeCommand(plugin),
                 new DirectionCommand(plugin),
                 new MergeCommand(plugin),
-                new UnmergeCommand(plugin)
+                new UnmergeCommand(plugin),
+                new AdminCommand(plugin)
         ));
     }
 
