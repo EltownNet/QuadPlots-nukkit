@@ -42,7 +42,6 @@ public class PlotGenerator extends Generator {
     public void generateChunk(int chX, int chZ) {
         final BaseFullChunk chunk = getChunkManager().getChunk(chX, chZ);
 
-
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 chunk.setBiomeId(x, z, EnumBiome.PLAINS.id);

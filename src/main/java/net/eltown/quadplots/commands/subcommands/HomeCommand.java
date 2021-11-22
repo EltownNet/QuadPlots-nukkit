@@ -8,6 +8,7 @@ import net.eltown.quadplots.commands.PlotCommand;
 import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.language.Language;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -36,7 +37,7 @@ public class HomeCommand extends PlotCommand {
                         final Player targetPlayer = Server.getInstance().getPlayer(target);
                         if (targetPlayer != null) target = targetPlayer.getName();
 
-                        final LinkedList<Plot> plots = QuadPlots.getApi().getProvider().getPlots(target);
+                        final LinkedList<Plot> plots = new LinkedList<>(QuadPlots.getApi().getProvider().getPlotsFiltered(target));
 
                         // has.no.plot: "§cDieser Spieler hat keine Plots!"
                         //has.no.plot.with.id: "§cDieser Spieler hat kein Plot mit der ID [0]!"
@@ -57,7 +58,7 @@ public class HomeCommand extends PlotCommand {
                             sender.sendMessage(Language.get("invalid.number"));
                             return;
                         }
-                        final LinkedList<Plot> plots = QuadPlots.getApi().getProvider().getPlots(player.getName());
+                        final LinkedList<Plot> plots = QuadPlots.getApi().getProvider().getPlotsFiltered(player.getName());
                         if (plots.size() >= id) {
                             player.teleport(plots.get(id - 1).getPosition());
                             player.sendMessage(Language.get("teleported"));
@@ -68,7 +69,7 @@ public class HomeCommand extends PlotCommand {
                         final Player targetPlayer = Server.getInstance().getPlayer(target);
                         if (targetPlayer != null) target = targetPlayer.getName();
 
-                        final LinkedList<Plot> plots = QuadPlots.getApi().getProvider().getPlots(target);
+                        final LinkedList<Plot> plots = QuadPlots.getApi().getProvider().getPlotsFiltered(target);
 
                         if (plots.size() != 0) {
                             player.teleport(plots.get(0).getPosition());

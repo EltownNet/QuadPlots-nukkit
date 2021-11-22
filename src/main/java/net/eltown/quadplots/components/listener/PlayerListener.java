@@ -3,6 +3,7 @@ package net.eltown.quadplots.components.listener;
 import cn.nukkit.AdventureSettings;
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import cn.nukkit.block.BlockID;
 import cn.nukkit.event.Event;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
@@ -14,28 +15,26 @@ import cn.nukkit.event.block.LiquidFlowEvent;
 import cn.nukkit.event.entity.EntityDamageByEntityEvent;
 import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.event.entity.EntityExplodeEvent;
+import cn.nukkit.event.block.BlockPistonEvent;
 import cn.nukkit.event.player.*;
+import cn.nukkit.event.redstone.RedstoneUpdateEvent;
 import cn.nukkit.item.ItemEdible;
+import cn.nukkit.item.ItemPotion;
 import cn.nukkit.level.Location;
 import net.eltown.quadplots.QuadPlots;
 import net.eltown.quadplots.components.data.Plot;
 import net.eltown.quadplots.components.data.Road;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class PlayerListener implements Listener {
 
     private void cancel(final Player player, final Event event) {
         event.setCancelled(true);
-
-        if (player.getGamemode() == 0) {
-            player.setGamemode(2);
-            Server.getInstance().getScheduler().scheduleDelayedTask(() -> {
-                player.setGamemode(0);
-
-            }, 10, true);
-        }
     }
 
 
@@ -92,8 +91,16 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void on(final BlockPistonChangeEvent event) {
-        event.setCancelled(true);
+    public void on(final BlockPistonEvent event) {
+        event.getBlocks().forEach((b) -> {
+            Plot plot = QuadPlots.getApi().getPlotByPosition(b.getLocation());
+            if (plot == null) {
+                final Road road = QuadPlots.getApi().getRoad(b.getLocation());
+                if (road.isMerged()) plot = road.getPlot();
+            }
+
+            if (plot == null) event.setCancelled(true);
+        });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -131,7 +138,7 @@ public class PlayerListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void on(final PlayerInteractEvent event) {
         if (QuadPlots.getApi().isManager(event.getPlayer().getName())) return;
-        if (event.getItem() instanceof ItemEdible && event.getAction() == PlayerInteractEvent.Action.RIGHT_CLICK_AIR)
+        if ((event.getItem() instanceof ItemEdible || event.getItem() instanceof ItemPotion) && event.getAction() == PlayerInteractEvent.Action.RIGHT_CLICK_AIR)
             return;
         if (QuadPlots.getApi().getProvider().getGeneratorInfo().getLevel().equalsIgnoreCase(event.getPlayer().getLevel().getName())) {
             final Plot plot = QuadPlots.getApi().getPlotByPosition(event.getBlock() != null ? event.getBlock().getLocation() : event.getPlayer().getPosition());

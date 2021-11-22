@@ -222,6 +222,12 @@ public class Api {
             return plots;
         }
 
+        public LinkedList<Plot> getPlotsFiltered(String player) {
+            final LinkedList<Plot> plots = new LinkedList<>(this.getPlots(player));
+            plots.removeIf(p -> p.isMerged() && !p.isOrigin());
+            return plots;
+        }
+
         public void updatePlot(Plot plot) {
             CompletableFuture.runAsync(() -> {
                 final Document doc = this.coll.find(new Document("_id", plot.getStringId())).first();
